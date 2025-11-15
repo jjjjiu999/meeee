@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>粉色背景＋漂浮淡藍愛心搜尋頁面</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: "Microsoft JhengHei", sans-serif;
+    }
+
+    /* 搜尋框置中 */
+    .search-area {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input {
+      padding: 10px 14px;
+      font-size: 18px;
+      border-radius: 8px;
+      border: 2px solid #6b73ff;
+      width: 260px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: transform 0.2s;
+    }
+
+    input:focus {
+      transform: scale(1.05);
+      outline: none;
+      border-color: #5a5cff;
+    }
+
+    button {
+      background: white;
+      border: 2px solid #6b73ff;
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 10px;
+      font-size: 16px;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    button:hover {
+      background: #e0e0ff;
+      transform: scale(1.1);
+    }
+
+    /* 結果卡片樣式 */
+    #result {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px;
+      display: none;
+      font-size: 18px;
+      width: 300px;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    #result img {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 12px;
+    }
+
+    /* 關閉叉 */
+    #closeBtn {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 20px;
+      color: #666;
+      transition: color 0.2s;
+    }
+
+    #closeBtn:hover {
+      color: #ff4444;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- 背景畫布 -->
+  <canvas id="bgCanvas"></canvas>
+
+  <!-- 置中搜尋框 -->
+  <div class="search-area">
+    <input id="searchInput" type="text" placeholder="輸入名字，例如：陳暐欣" />
+    <button id="searchBtn">🔍</button>
+  </div>
+
+  <!-- 結果卡片 -->
+  <div id="result">
+    <span id="closeBtn">✖</span>
+    <div id="resultContent"></div>
+  </div>
+
+  <script>
+    /*=======================*/
+    /* 🎨 背景粉色 + 漸層淡藍心形  */
+    /*=======================*/
+    const canvas = document.getElementById("bgCanvas");
+    const ctx = canvas.getContext("2d");
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    const hearts = [];
+    const heartCount = 60;
+
+    for (let i = 0; i < heartCount; i++) {
+      hearts.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: 15 + Math.random() * 25,
+      });
+    }
+
+    let mouseX = window.innerWidth / 2;
+
+    window.addEventListener("mousemove", (e) => {
+      mouseX = e.clientX;
+    });
+
+    function drawHeart(x, y, size) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(size / 20, size / 20);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(0, -3, -5, -3, -5, 0);
+      ctx.bezierCurveTo(-5, 3, 0, 6, 0, 8);
+      ctx.bezierCurveTo(0, 6, 5, 3, 5, 0);
+      ctx.bezierCurveTo(5, -3, 0, -3, 0, 0);
+      // 漸層淡藍色
+      const grad = ctx.createLinearGradient(-5, -8, 5, 8);
+      grad.addColorStop(0, "rgba(150,200,255,0.6)");
+      grad.addColorStop(1, "rgba(100,150,255,0.8)");
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function animate() {
+      ctx.fillStyle = "#ffd6e8"; // 粉色背景
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      hearts.forEach((h) => {
+        const dist = Math.abs(mouseX - canvas.width / 2);
+        const scale = 1 + dist / canvas.width;
+        drawHeart(h.x, h.y, h.size * scale * 1.5); // 放大愛心
+      });
+
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    /*=======================*/
+    /* 🔍 搜尋功能（需按按鈕） */
+    /*=======================*/
+    const data = {
+      "陳暐欣": {
+        性別: "女",
+        系級: "教科四B",
+        年齡: "21",
+        綽號: "酒窩",
+        興趣: "跳舞",
+        照片: "IMG_5146.JPG"
+      }
+    };
+
+    const input = document.getElementById("searchInput");
+    const btn = document.getElementById("searchBtn");
+    const resultBox = document.getElementById("result");
+    const resultContent = document.getElementById("resultContent");
+    const closeBtn = document.getElementById("closeBtn");
+
+    btn.addEventListener("click", () => {
+      const name = input.value.trim();
+
+      resultBox.style.display = "block";
+
+      if (data[name]) {
+        const info = data[name];
+        resultContent.innerHTML = `
+          <img src="${info.照片}" alt="${name}">
+          <strong>姓名：</strong> ${name}<br>
+          <strong>性別：</strong> ${info.性別}<br>
+          <strong>系級：</strong> ${info.系級}<br>
+          <strong>年齡：</strong> ${info.年齡}<br>
+          <strong>綽號：</strong> ${info.綽號}<br>
+          <strong>興趣：</strong> ${info.興趣}
+        `;
+      } else {
+        resultContent.innerHTML = `
+          <img src="e8a5b0d82f4c8b364cd51ac53b50e67b.jpg" alt="無資料">
+          查無資料
+        `;
+      }
+    });
+
+    closeBtn.addEventListener("click", () => {
+      resultBox.style.display = "none";
+    });
+
+  </script>
+
+</body>
+</html>
